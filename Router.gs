@@ -18,8 +18,17 @@ function doPost(e) {
 
       // 2. Admin Actions (Status change)
       case 'update_status': response = changeAccountStatus(params.email, params.status); break;
+      
+      // 3. User Self-Service Gateway Controls
+      case 'suspend_key': response = suspendKey(params.email); break;
+      case 'regenerate_key': response = regenerateKey(params.email); break;
+      case 'delete_account': response = deleteAccount(params.email); break;
+      
+      // 4. Health Score & Logs Export
+      case 'get_health_score': response = calculateHealthScore(params.email); break;
+      case 'get_full_logs': response = getFullLogs(params.email); break;
 
-      // 3. Hugging Face Sync Action (Super Fast API Check)
+      // 5. Hugging Face Sync Action (Super Fast API Check)
       case 'hf_verify_key':
         const masterSheet = getMasterSheet();
         const data = masterSheet.getDataRange().getValues();
@@ -32,14 +41,15 @@ function doPost(e) {
           }
         }
         
+        // Only allow Active accounts (not Suspended, Blocked, or Deleted)
         if (userRow && userRow[6] === "Active") { // Column G: Status
           response = {status: "authorized", user: userRow[1], role: userRow[3]};
         } else {
-          response = {status: "unauthorized", message: "Key invalid, blocked, or deleted."};
+          response = {status: "unauthorized", message: "Key invalid, blocked, suspended, or deleted."};
         }
         break;
 
-      // 4. API Usage Logging Endpoint (Hugging Face Background Call)
+      // 6. API Usage Logging Endpoint (Hugging Face Background Call)
       case 'log_api_usage':
         response = logApiUsage(params);
         break;

@@ -22,7 +22,7 @@ function verifyRegistration(params) {
   
   getMasterSheet().appendRow([
     Utilities.getUuid(), params.email, params.name, params.role, orgName, 
-    newApiKey, "Active", "FALSE", userSheetId, 0, 0
+    newApiKey, "Active", "FALSE", userSheetId, 0, 0, 0
   ]);
   
   CacheService.getScriptCache().remove("OTP_" + params.email);
@@ -76,4 +76,84 @@ function changeAccountStatus(email, newStatus) { // newStatus: 'Active', 'Blocke
     return {status: "success", message: `Account marked as ${newStatus}`};
   }
   return {status: "error", message: "User not found"};
+}
+
+/**
+ * Suspend a user's API key - sets status to 'Suspended'
+ * @param {string} email - User email
+ * @returns {object} Status result
+ */
+function suspendKey(email) {
+  const rowIndex = findUserByEmail(email);
+  if (rowIndex === -1) {
+    return {status: "error", message: "User not found"};
+  }
+  
+  const data = getMasterSheet().getDataRange().getValues();
+  const currentStatus = data[rowIndex][6]; // Column G: Status
+  
+  if (currentStatus === "Deleted") {
+    return {status: "error", message: "Cannot suspend a deleted account"};
+  }
+  
+  getMasterSheet().getRange(rowIndex + 1, 7).setValue("Suspended"); // Column G: Status
+  logUserAction(email, "KEY_SUSPENDED", "System", "", "API key suspended by admin or user request");
+  return {status: "success", message: "API key suspended. Access denied."};
+}
+
+/**
+ * Regenerate a new API key for user and invalidate old one
+ * @param {string} email - User email
+ * @returns {object} New API key result
+ */
+function regenerateKey(email) {
+  const rowIndex = findUserByEmail(email);
+  if (rowIndex === -1) {
+    return {status: "error", message: "User not found"};
+  }
+  
+  const data = getMasterSheet().getDataRange().getValues();
+  const currentStatus = data[rowIndex][6]; // Column G: Status
+  
+  if (currentStatus === "Deleted" || currentStatus === "Suspended") {
+    return {status: "error", message: `Cannot regenerate key for ${currentStatus} account`};
+  }
+  
+  const newApiKey = "sk_live_" + Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  getMasterSheet().getRange(rowIndex + 1, 6).setValue(newApiKey); // Column F: API_Key
+  getMasterSheet().getRange(rowIndex + 1, 8).setValue("FALSE"); // Column H: Key_Seen (reset to allow viewing)
+  
+  logUserAction(email, "KEY_REGENERATED", "System", "", "API key regenerated - old key invalidated");
+  sendSecurityEmail(email, "Security Alert: API Key Regenerated", 
+    `Hi,<br><br>Your API key has been regenerated.<br><b>New Key:</b> ${newApiKey}<br><br>The previous key is now invalid.<br><b>Time:</b> ${new Date().toISOString()}<br><br>If this wasn't you, contact support immediately.`);
+  
+  return {status: "success", api_key: newApiKey, message: "New API key generated. Old key is now invalid."};
+}
+
+/**
+ * Delete a user account - marks as 'Deleted' and blocks all access
+ * @param {string} email - User email
+ * @returns {object} Deletion result
+ */
+function deleteAccount(email) {
+  const rowIndex = findUserByEmail(email);
+  if (rowIndex === -1) {
+    return {status: "error", message: "User not found"};
+  }
+  
+  const data = getMasterSheet().getDataRange().getValues();
+  const currentStatus = data[rowIndex][6]; // Column G: Status
+  
+  if (currentStatus === "Deleted") {
+    return {status: "error", message: "Account already deleted"};
+  }
+  
+  getMasterSheet().getRange(rowIndex + 1, 7).setValue("Deleted"); // Column G: Status
+  logUserAction(email, "ACCOUNT_DELETED", "System", "", "Account marked as deleted by user or admin");
+  
+  // Optional: Send deletion confirmation email
+  sendSecurityEmail(email, "Account Deletion Confirmation", 
+    `Hi,<br><br>Your account has been marked as deleted.<br>All API access is now blocked.<br><b>Time:</b> ${new Date().toISOString()}<br><br>Contact support if this was done in error.`);
+  
+  return {status: "success", message: "Account deleted. All access blocked."};
 }
