@@ -27,3 +27,40 @@ function logUserAction(email, eventType, device, ip, details) {
     // This function handles logging only
   }
 }
+
+function logApiUsage(params) {
+  const masterSheet = getMasterSheet();
+  const data = masterSheet.getDataRange().getValues();
+  
+  // Find user by email or apiKey
+  let userRowIndex = -1;
+  for (let i = 1; i < data.length; i++) {
+    if (data[i][1] === params.email || data[i][5] === params.apiKey) {
+      userRowIndex = i;
+      break;
+    }
+  }
+  
+  if (userRowIndex === -1) {
+    return {status: "error", message: "User not found"};
+  }
+  
+  const rowNum = userRowIndex + 1;
+  const currentRequests = Number(data[userRowIndex][9]) || 0; // Column J: Total_Requests
+  const currentTokens = Number(data[userRowIndex][10]) || 0; // Column K: Total_Tokens
+  
+  const tokensUsed = Number(params.tokens) || 0;
+  
+  // Update Master Sheet: Increment requests and add tokens
+  masterSheet.getRange(rowNum, 10).setValue(currentRequests + 1);
+  masterSheet.getRange(rowNum, 11).setValue(currentTokens + tokensUsed);
+  
+  // Log to user's personal spreadsheet
+  const userSheetId = data[userRowIndex][8];
+  const userSheet = SpreadsheetApp.openById(userSheetId).getActiveSheet();
+  const timestamp = new Date().toISOString();
+  const model = params.model || "Unknown";
+  userSheet.appendRow([timestamp, "API_USAGE", model, "", `Tokens: ${tokensUsed}`]);
+  
+  return {status: "success", message: "Usage logged"};
+}

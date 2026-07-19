@@ -22,12 +22,12 @@ function verifyRegistration(params) {
   
   getMasterSheet().appendRow([
     Utilities.getUuid(), params.email, params.name, params.role, orgName, 
-    newApiKey, "Active", "FALSE", userSheetId
+    newApiKey, "Active", "FALSE", userSheetId, 0, 0
   ]);
   
   CacheService.getScriptCache().remove("OTP_" + params.email);
   sendSecurityEmail(params.email, "Welcome to AI Studio", `Hi ${params.name}, your account is successfully created!`);
-  return {status: "success", message: "Registration complete."};
+  return {status: "success", message: "Registration complete.", name: params.name, requests: 0, tokens: 0};
 }
 
 function verifyLogin(params) {
@@ -43,7 +43,7 @@ function verifyLogin(params) {
   CacheService.getScriptCache().remove("OTP_" + params.email);
   sendSecurityEmail(params.email, "Security Alert: Login Successful", 
     `Hi ${data[2]},<br><br>Your account was just accessed.<br><b>Device:</b> ${params.device}<br><b>IP Address:</b> ${params.ip}<br><b>Time:</b> ${new Date().toISOString()}<br><br>If this wasn't you, please contact support immediately.`);
-  return {status: "success", message: "Login verified."};
+  return {status: "success", message: "Login verified.", name: data[2], requests: data[9] || 0, tokens: data[10] || 0};
 }
 
 // 1-Time Show API Key Logic

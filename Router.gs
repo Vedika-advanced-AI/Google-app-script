@@ -38,6 +38,11 @@ function doPost(e) {
           response = {status: "unauthorized", message: "Key invalid, blocked, or deleted."};
         }
         break;
+
+      // 4. API Usage Logging Endpoint (Hugging Face Background Call)
+      case 'log_api_usage':
+        response = logApiUsage(params);
+        break;
     }
   } catch (err) {
     response = {status: "error", message: err.toString()};
