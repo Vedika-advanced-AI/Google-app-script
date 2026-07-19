@@ -13,7 +13,7 @@ function getMasterSheet() {
       masterId = ss.getId();
       const sheet = ss.getActiveSheet();
       // मास्टर हेडर्स
-      sheet.appendRow(["User_ID", "Email", "Name", "Role", "Organization", "API_Key", "Status", "Key_Seen", "User_Sheet_ID"]);
+      sheet.appendRow(["User_ID", "Email", "Name", "Role", "Organization", "API_Key", "Status", "Key_Seen", "User_Sheet_ID", "Total_Requests", "Total_Tokens"]);
       DriveApp.getFileById(masterId).moveTo(folder);
     }
     props.setProperty('MASTER_SHEET_ID', masterId);
