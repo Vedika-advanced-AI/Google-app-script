@@ -1,0 +1,34 @@
+```
+# Google Apps Script specific ignores
+*.gs.bak
+*.gs~
+*.bak
+*.tmp
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Environment variables
+.env
+.env.local
+*.env.*
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build and distribution
+dist/
+build/
+target/
+
+# Dependencies
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.egg-info/
+```

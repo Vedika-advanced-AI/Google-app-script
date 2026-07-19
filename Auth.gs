@@ -22,7 +22,7 @@ function verifyRegistration(params) {
   
   getMasterSheet().appendRow([
     Utilities.getUuid(), params.email, params.name, params.role, orgName, 
-    newApiKey, "Active", false, userSheetId
+    newApiKey, "Active", "FALSE", userSheetId
   ]);
   
   CacheService.getScriptCache().remove("OTP_" + params.email);
@@ -41,6 +41,8 @@ function verifyLogin(params) {
   
   logUserAction(params.email, "LOGIN", params.device, params.ip, "Successful login");
   CacheService.getScriptCache().remove("OTP_" + params.email);
+  sendSecurityEmail(params.email, "Security Alert: Login Successful", 
+    `Hi ${data[2]},<br><br>Your account was just accessed.<br><b>Device:</b> ${params.device}<br><b>IP Address:</b> ${params.ip}<br><b>Time:</b> ${new Date().toISOString()}<br><br>If this wasn't you, please contact support immediately.`);
   return {status: "success", message: "Login verified."};
 }
 
@@ -51,11 +53,14 @@ function fetchApiKey(email) {
   if (rowIndex === -1) return {status: "error", message: "User not found."};
   
   const rowNum = rowIndex + 1;
-  const isKeySeen = master.getRange(rowNum, 8).getValue(); // Column H: Key_Seen
+  const isKeySeenValue = master.getRange(rowNum, 8).getValue(); // Column H: Key_Seen
   const fullApiKey = master.getRange(rowNum, 6).getValue(); // Column F: API_Key
   
+  // Handle both boolean and string representations of "seen" status
+  const isKeySeen = (isKeySeenValue === true || isKeySeenValue === "TRUE" || isKeySeenValue === "true");
+  
   if (!isKeySeen) {
-    master.getRange(rowNum, 8).setValue(true); // Mark as seen
+    master.getRange(rowNum, 8).setValue("TRUE"); // Mark as seen (use string for consistency)
     return {status: "success", api_key: fullApiKey, message: "Save this key! It won't be shown fully again."};
   } else {
     const maskedKey = fullApiKey.substring(0, 12) + "****************" + fullApiKey.substring(fullApiKey.length - 4);

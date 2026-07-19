@@ -23,9 +23,7 @@ function logUserAction(email, eventType, device, ip, details) {
     const timestamp = new Date().toISOString();
     userSheet.appendRow([timestamp, eventType, device, ip, details]);
     
-    if (eventType === "LOGIN") {
-      const emailBody = `A new login was detected on your account.<br><br><b>Device:</b> ${device}<br><b>IP Address:</b> ${ip}<br><b>Time:</b> ${timestamp}<br><br>If this wasn't you, please contact support immediately.`;
-      sendSecurityEmail(email, "Security Alert: New Login Detected", emailBody);
-    }
+    // Security email is sent from verifyLogin() for LOGIN events
+    // This function handles logging only
   }
 }
