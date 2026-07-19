@@ -12,8 +12,8 @@ function getMasterSheet() {
       const ss = SpreadsheetApp.create(CONFIG.MASTER_SHEET_NAME);
       masterId = ss.getId();
       const sheet = ss.getActiveSheet();
-      // मास्टर हेडर्स
-      sheet.appendRow(["User_ID", "Email", "Name", "Role", "Organization", "API_Key", "Status", "Key_Seen", "User_Sheet_ID", "Total_Requests", "Total_Tokens"]);
+      // मास्टर हेडर्स (Updated with Error_Count column)
+      sheet.appendRow(["User_ID", "Email", "Name", "Role", "Organization", "API_Key", "Status", "Key_Seen", "User_Sheet_ID", "Total_Requests", "Total_Tokens", "Error_Count"]);
       DriveApp.getFileById(masterId).moveTo(folder);
     }
     props.setProperty('MASTER_SHEET_ID', masterId);
