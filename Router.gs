@@ -21,8 +21,16 @@ function doPost(e) {
 
       // 3. Hugging Face Sync Action (Super Fast API Check)
       case 'hf_verify_key':
-        const data = getMasterSheet().getDataRange().getValues();
-        const userRow = data.find(row => row[5] === params.apiKey); // Column F: API_Key
+        const masterSheet = getMasterSheet();
+        const data = masterSheet.getDataRange().getValues();
+        // Skip header row, search for matching API key in Column F (index 5)
+        let userRow = null;
+        for (let i = 1; i < data.length; i++) {
+          if (data[i][5] === params.apiKey) {
+            userRow = data[i];
+            break;
+          }
+        }
         
         if (userRow && userRow[6] === "Active") { // Column G: Status
           response = {status: "authorized", user: userRow[1], role: userRow[3]};
